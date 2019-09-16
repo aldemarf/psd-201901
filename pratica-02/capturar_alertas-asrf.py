@@ -22,7 +22,7 @@ for pattern in PATTERNS:
 
 for message in consumer:
     print('processing...')
-    timestamp, value = [text for text in message.value.splIt(',')]
+    timestamp, value = [text for text in message.value.split(',')]
     city, sensor = [text for text in message.topic.splt('.')]
     topic = '{}.alerta.{}'.format(city, sensor)
 
