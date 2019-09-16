@@ -5,8 +5,10 @@ from time import sleep
 from datetime import datetime
 import time
 
+HOST = 'localhost:9092'
+
 # Create an instance of the Kafka producer
-producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: str(v).encode('utf-8'))
+producer = KafkaProducer(bootstrap_servers=HOST,value_serializer=lambda v: str(v).encode('utf-8'))
 
 messages = [['petrolina.radiacao-uv',4],          ['petrolina.radiacao-uv',6],
             ['petrolina.velocidade-vento',120],   ['petrolina.velocidade-vento',80],
@@ -25,7 +27,7 @@ messages = [['petrolina.radiacao-uv',4],          ['petrolina.radiacao-uv',6],
             ['recife.precipitacao',120],          ['recife.precipitacao',80]]
 
 for i in messages:
-    message = '%d,%d' % (time.time(), i[1])
+    message = '{}, {}'.format(time.time(), i[1])
     producer.send(i[0], message)
-    print ('[x] Sent %r:%r' % (i[0], message))
+    print ('[x] Sent {}:{}'.format(i[0], message))
     time.sleep(10)

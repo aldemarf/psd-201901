@@ -6,27 +6,34 @@ from datetime import datetime
 import time
 import json
 
-HOST = ''
+HOST = 'localhost:9092'
 GROUP = 'my-group'
+TOPICS = ['petrolina.', 'parnamirim.','serra-talhada.', 'pesqueira.', 'recife.']
+PATTERNS = ['^petrolina.[^alerta]*', '^parnamirim.[^alerta]*', '^serra-talhada.[^alerta]*', '^pesqueira.[^alerta]*', '^recife.[^alerta]*']
 
 consumer = KafkaConsumer(
-    topic,
-     bootstrap_servers=['localhost:9092'],
-     auto_offset_reset='earliest',
-     enable_auto_commit=True,
-     group_id=GROUP,
-     value_deserializer=lambda v: str(v).encode('utf-8'))
+    bootstrap_servers=HOST,
+    auto_offset_reset='earliest',
+    enable_auto_commit=True,
+    group_id=GROUP,
+    value_deserializer=lambda v: v.decode('utf-8'))
+
+for pattern in PATTERNS:
+    consumer.subscribe(pattern=pattern)
 
 producer = KafkaProducer(
-    bootstrap_servers='localhost:9092',
+    bootstrap_servers=HOST,
     value_serializer=lambda v: str(v).encode('utf-8'))
 
 print("press ctrl+c to stop...")
 
 for message in consumer:
-    alert = False    
-    timestamp, value = [text for text in message.value.splt(',')]
-    city, sensor = [text for text in message.topic.splt('.')]
+    print(message.value)
+    print(message.topic)
+    alert = False
+    timestamp, value = [text for text in message.value.split(',')]
+    value = int(value)
+    city, sensor = [text for text in message.topic.split('.')]
     topic = '{}.alerta.{}'.format(city, sensor)
 
     if sensor == 'precipitacao':
@@ -41,6 +48,6 @@ for message in consumer:
 
     if alert:
         producer.send(topic, value)
-        print('sent: ' + message)
-    
+        print('sent: {}'.format(message))
+
     time.sleep(10)
