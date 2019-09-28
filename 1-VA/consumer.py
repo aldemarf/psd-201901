@@ -9,6 +9,7 @@ import logging
 import time
 import requests
 import paho.mqtt.client as mqtt
+import tb_api
 
 logging.basicConfig(level=logging.INFO)
 
@@ -45,18 +46,48 @@ regex = create_regex_pattern()
 consumer.subscribe(pattern=regex)
 
 
-def create_stations(stations=[]):
-    """" create devices for every station passed as parameter """
+def get_stations_info(path='./'):
+    """ get information from all stations with .csv at given path"""
+    csv_files = glob.glob('{}A*.csv'.format(path))
+    stations = {}
+
+    for path in csv_files:
+        with open(path) as data:
+            station_csv = csv.DictReader(data, delimiter=',')
+            reading = next(station_csv)
+
+        station_code = reading['stationCode'].strip()
+        if station_code in stations:
+            continue
+        else:
+            stations[station_code] = reading['stationName'].strip()
+
+    return stations
+
+
+def create_met_stations(stations={}):
+    """" creates devices for every weather station passed as parameter and return an array with created devices"""
+    if not isinstance(stations, dict):
+        logging.error('Wrong type. Pass a dict \{stationCode : stationName\}')
+        return None
+
     if len(stations) == 0:
         return None
     else:
-        pass
+        token = tb_api.get_tenant_token()
+        create = tb_api.create_device
+        devices = [create(code, 'Estação meteorológica', device_label=name, token=token) \
+            for code, name in stations.items()]
+    return devices
 
 
 ########################################################
 ################       TEST FIELD       ################
 ########################################################
 
+# stations = get_stations_info()
+# devices = create_met_stations(stations)
+# print(devices)
 
 # for message in consumer:
 #     print('{}'.format(message.topic))
@@ -71,10 +102,9 @@ def create_stations(stations=[]):
 
 
 
-
-
-
-
+########################################################
+#######   TODO: Implement telemetry feed to TB   #######
+########################################################
 
 
 # def on_connect(client, userdata, flags, rc):
