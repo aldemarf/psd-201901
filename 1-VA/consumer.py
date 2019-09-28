@@ -10,7 +10,6 @@ import time
 import requests
 import paho.mqtt.client as mqtt
 
-
 logging.basicConfig(level=logging.INFO)
 
 HOST = 'localhost:9092'
@@ -48,7 +47,7 @@ consumer.subscribe(pattern=regex[:-1])
 
 
 def get_tenant_token(host='localhost', port='9090', user='tenant@thingsboard.org', pwd='tenant'):
-
+    """ Returns tenants token """
     user_id = {"username": user, "password": pwd}
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
     url = 'http://{}:{}/api/auth/login'.format(host, port)
@@ -63,10 +62,9 @@ def get_tenant_token(host='localhost', port='9090', user='tenant@thingsboard.org
         logging.error('status response: {} -- {}'.format(data['status'], data['message']))
         return None
 
-# print(get_user_token())
 
 def get_tenant_devices(device_name, host='localhost', port='9090', token='', **kwargs):
-
+    """ Returns tenant attached devices """
     token = 'Bearer {}'.format(token)
     headers = {'Accept': 'application/json', 'X-Authorization': token}
     url = 'http://{}:{}/api/tenant/devices?'.format(host, port)
@@ -79,16 +77,12 @@ def get_tenant_devices(device_name, host='localhost', port='9090', token='', **k
 
     if deviceType:
         url += 'type={}&'.format(deviceType)
-
     if textSearch:
         url += 'textSearch={}&'.format(textSearch)
-
     if idOffset:
         url += 'idOffset={}&'.format(idOffset)
-
     if textOffset:
         url += 'textOffset={}&'.format(textOffset)
-
     if limit:
         url += 'limit={}&'.format(limit)
 
@@ -106,7 +100,7 @@ def get_tenant_devices(device_name, host='localhost', port='9090', token='', **k
 
 
 def get_device_id(device):
-
+    """ Returns devices ids """
     if isinstance(device, list):
         ids = [item['id']['id'] for item in device]
         return ids
@@ -115,7 +109,7 @@ def get_device_id(device):
 
 
 def get_device_credential(device_id='', host='localhost', port='9090', token=''):
-
+    """ Returns a single device credential : String"""
     token = 'Bearer {}'.format(token)
     headers = {'Accept': 'application/json', 'X-Authorization': token}
 
@@ -133,22 +127,49 @@ def get_device_credential(device_id='', host='localhost', port='9090', token='')
 
 
 def get_devices_credentials(devices_list=[], host='localhost', port='9090', token=''):
+    """ Returns a dictionary with device id and its credential {id : credential}"""
     if len(devices_list) == 0:
         return None
     else:
         get = get_device_credential
-        credentials = [get(device, host, port, token) for device in devices_list]
+        credentials = {device: get(device, host, port, token) for device in devices_list}
         return credentials
 
 
+def create_device(device_name, device_type, device_label='', host='localhost', port='9090', token=''):
+    """ create a single device and returns its the TB object """
+    token = 'Bearer {}'.format(token)
+    headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Authorization': token}
+    url = 'http://{}:{}/api/device'.format(host, port)
+    device = {"name": device_name, "type": device_type, "label" : device_label}
+
+    result = requests.post(url, headers=headers, json=device)
+    data = json.loads(result.content)
+
+    if result.status_code == 200:
+        return data
+    else:
+        logging.error('status response: {} -- {}'.format(data['status'], data['message']))
+        return None
+
+
+
+########################################################
+################       TEST FIELD       ################
+########################################################
 
 token = get_tenant_token()
+
+device = create_device('teste_API_00', 'Station', 'cidade A', token=token)
+print(device)
 
 result = get_tenant_devices('', token=get_tenant_token(), limit=1000)
 id_list = get_device_id(result)
 credentials_list = get_devices_credentials(id_list, token=token)
 print(credentials_list)
 
+########################################################
+################       TEST FIELD       ################
 ########################################################
 
 
