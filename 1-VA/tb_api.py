@@ -118,15 +118,6 @@ def create_device(device_name, device_type, device_label='', host='localhost', p
 ################       TEST FIELD       ################
 ########################################################
 
-token = get_tenant_token()
-
-device = create_device('teste_API_00', 'Station', 'cidade A', token=token)
-print(device)
-
-result = get_tenant_devices('', token=get_tenant_token(), limit=1000)
-id_list = get_device_id(result)
-credentials_list = get_devices_credentials(id_list, token=token)
-print(credentials_list)
 
 
 ########################################################
