@@ -47,7 +47,6 @@ def get_tenant_devices(host='localhost', port='9090', token='', **kwargs):
         url += 'limit={}&'.format(limit)
 
     url = url[:-1]
-
     result = requests.get(url, headers=headers)
     data = json.loads(result.content)
 
