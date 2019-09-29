@@ -23,7 +23,7 @@ def get_tenant_token(host='localhost', port='9090', user='tenant@thingsboard.org
         return None
 
 
-def get_tenant_devices(device_name, host='localhost', port='9090', token='', **kwargs):
+def get_tenant_devices(host='localhost', port='9090', token='', **kwargs):
     """ Returns tenant attached devices """
     token = 'Bearer {}'.format(token)
     headers = {'Accept': 'application/json', 'X-Authorization': token}
@@ -118,6 +118,10 @@ def create_device(device_name, device_type, device_label='', host='localhost', p
 ################       TEST FIELD       ################
 ########################################################
 
+# token = get_tenant_token()
+# devices_list = get_tenant_devices(limit=1000, token=token)
+# id_list = get_device_id(devices_list, token=token)
+# credentials = get_devices_credentials(devices_list=id_list, token=token)
 
 
 ########################################################
