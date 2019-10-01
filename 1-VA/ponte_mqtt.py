@@ -9,6 +9,7 @@ import requests
 import paho.mqtt.client as pahoMqtt
 import tb_api
 
+from paho.mqtt import publish
 from kafka import KafkaConsumer
 
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +24,7 @@ def create_regex_pattern(path='./'):
             station_csv = csv.DictReader(data, delimiter=',')
             reading = next(station_csv)
 
-        string = reading['stationName'].strip().strip().strip().replace(' ', '')
+        string = reading['stationName'].strip().replace(' ', '')
         regex += '^(estacoes\.{})\.+|'.format(string)
 
     return regex[:-1]
@@ -91,33 +92,9 @@ consumer.subscribe(pattern=regex)
 ########################################################
 
 
-def on_connect(client, userdata, flags, rc):
-    print("Connected to {} with result code {}".format(client._host, rc))
-
-
-def mqtt_publish(client, host='localhost', port=1883, topic='v1/devices/me/telemetry', message='', qos=1):
-
-    client.connect(host, port)
-
-    try:
-        result = client.publish(topic=topic, payload=message, qos=qos)
-
-        if result.rc == 0:
-            logging.info('Message id:{} Published'.format(result.mid))
-        else:
-            logging.error('Message id:{} -- Error {}'.format(result.mid, result.rc))
-
-    except KeyboardInterrupt:
-        client.disconnect()
-        logging.warning('Shutdown MQTT connection...')
-
-    except Exception as e:
-        client.disconnect()
-        logging.error(e)
-
-    else:
-        client.disconnect()
-
+MQTT_HOST='localhost'
+MQTT_PORT=1883
+TB_TOPIC='v1/devices/me/telemetry'
 
 tenant_token = tb_api.get_tenant_token()
 tenant_devices = tb_api.get_tenant_devices(token=tenant_token, limit='10000')
@@ -125,21 +102,24 @@ devName = tb_api.get_device_name
 devices_dict = {devName(device): device for device in tenant_devices}
 
 try:
-    client = pahoMqtt.Client()
-
+    msg_index = 0
     while True:
-
         data = next(consumer).value
         device_code = data['stationCode'].strip()
         device_name = data['stationName'].strip()
 
         if device_code not in devices_dict:
-            device = tb_api.create_device(device_code, device_type='ESTACAO METEOROLOGICA', device_label=device_name)
+            device = tb_api.create_device(device_code, device_type='ESTACAO METEOROLOGICA', device_label=device_name, token=tenant_token)
+            devices_dict[device_code] = device
 
         device_id = tb_api.get_device_id(devices_dict[device_code])
         device_token = tb_api.get_device_credential(device_id, token=tenant_token)
-        client.username_pw_set(device_token)
-        mqtt_publish(client, message=json.dumps(data))
+        publish.single(TB_TOPIC, payload=encode_utf8(data), qos=0, hostname=MQTT_HOST, port=MQTT_PORT, auth={'username': device_token})
+
+        msg_index += 1
+        logging.info('Message #{} published. Device: {}'.format(msg_index, device_code))
+
+        # time.sleep(1.5)
 
 except Exception as error:
     logging.error(error)
