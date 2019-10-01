@@ -67,6 +67,15 @@ def get_device_id(device):
         return device['id']['id']
 
 
+def get_device_name(device):
+    """ Returns devices names """
+    if isinstance(device, list):
+        ids = [item['name'] for item in device]
+        return ids
+    else:
+        return device['name']
+
+
 def get_device_credential(device_id='', host='localhost', port='9090', token=''):
     """ Returns a single device credential : String"""
     token = 'Bearer {}'.format(token)
