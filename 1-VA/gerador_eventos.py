@@ -41,10 +41,12 @@ for count in range(ATTEMPTS):
         index = 0
         for station, data in stations_data.items():
             for reading in data:
-                producer.send(TOPIC_PATTERN.format(reading['stationName'].strip(), reading['stationCode'].strip()), reading)
+                staName = reading['stationName'].strip().replace(' ', '')
+                producer.send(TOPIC_PATTERN.format(staName, reading['stationCode'].strip()), reading)
                 logging.info('Sent message #{}'.format(index))
                 index += 1
-                time.sleep(PUBLISH_INTERVAL_1X)
+                # time.sleep(PUBLISH_INTERVAL_1X)
+                time.sleep(1)
 
     except KeyboardInterrupt:
         logging.info('')
@@ -56,7 +58,8 @@ for count in range(ATTEMPTS):
         logging.info('Trying again in 5 seconds... {}/{}'.format(count + 1, 3))
         time.sleep(5)
 
-    except KafkaTimeoutError:
+    except Exception as e:
+        logging.error(e)
         break
 
     else:
