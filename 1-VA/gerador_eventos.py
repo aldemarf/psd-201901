@@ -8,7 +8,8 @@ import os
 import logging
 
 from kafka import KafkaProducer
-from kafka.errors import KafkaConnectionError, BrokerNotAvailableError, NoBrokersAvailable
+from kafka.errors import *
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -16,13 +17,14 @@ HOST = 'localhost:9092'
 TOPIC_PATTERN = 'estacoes.{}.{}'
 ATTEMPTS = 3
 ENCODING = 'utf-8'
-PUBLISH_INTERVAL = 5
+PUBLISH_INTERVAL_1X = 3600
+PUBLISH_INTERVAL_10X = 360
+PUBLISH_INTERVAL_100X = 36
 
 encode_utf8 = lambda v: json.dumps(v).encode(ENCODING)
 
 stations_data = {}
 csv_files = glob.glob('A*.csv')
-
 
 for path in csv_files:
     with open(path) as data:
@@ -31,7 +33,6 @@ for path in csv_files:
 
     station_code = station_data[0]['stationCode']
     stations_data[station_code] = station_data
-
 
 for count in range(ATTEMPTS):
     try:
@@ -43,7 +44,7 @@ for count in range(ATTEMPTS):
                 producer.send(TOPIC_PATTERN.format(reading['stationName'].strip(), reading['stationCode'].strip()), reading)
                 logging.info('Sent message #{}'.format(index))
                 index += 1
-                time.sleep(PUBLISH_INTERVAL)
+                time.sleep(PUBLISH_INTERVAL_1X)
 
     except KeyboardInterrupt:
         logging.info('')
@@ -54,6 +55,9 @@ for count in range(ATTEMPTS):
         logging.info('\n')
         logging.info('Trying again in 5 seconds... {}/{}'.format(count + 1, 3))
         time.sleep(5)
+
+    except KafkaTimeoutError:
+        break
 
     else:
         break
