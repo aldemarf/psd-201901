@@ -45,8 +45,7 @@ for count in range(ATTEMPTS):
                 producer.send(TOPIC_PATTERN.format(staName, reading['stationCode'].strip()), reading)
                 logging.info('Sent message #{}'.format(index))
                 index += 1
-                # time.sleep(PUBLISH_INTERVAL_1X)
-                time.sleep(1)
+                time.sleep(PUBLISH_INTERVAL_100X)
 
     except KeyboardInterrupt:
         logging.info('')
