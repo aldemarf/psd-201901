@@ -7,9 +7,12 @@ import glob
 import tb_api as tb
 
 TB_TOKEN = tb.get_tenant_token()
-HOST =  "localHOST"
+HOST =  "localhost"
 token = "nx2JMXjH5CbC27eDHwGL"
 PORT = 1883
+#KAFKA_HOST = "172.16.206.12:9092"
+KAFKA_HOST = "localhost:9092"
+
 
 devices = tb.get_tenant_devices(token = TB_TOKEN,deviceType = 'PSD',limit=100)
 
@@ -31,15 +34,20 @@ def getMqttClient(token,on_connect, on_publish):
     client.connect(HOST,PORT,60)
     return client 
 
-def getDeviceToken(code):
-    print(code)
-    devices = tb.get_tenant_devices(token = TB_TOKEN,deviceType = 'PSD',limit=100)
+def getDeviceToken(code):   
+    #credential = tb.get_device_credential(device_id=code,token=TB_TOKEN)
+    #if credential == None:
+    #    new_device = tb.create_device(code, 'ESTAÇÃO METEREOLÓGICA','','localhost', '9090', TB_TOKEN)
+    #    credential = tb.get_device_credential(device_id=code,token=TB_TOKEN)
+    #    print("---------NEW DEVICE----------")
+    #    print(new_device)
+    devices = tb.get_tenant_devices(token = TB_TOKEN,deviceType = 'ESTAÇÃO METEREOLÓGICA',limit=100)
     for device in devices:
         if device['name'] == code:
             return tb.get_device_credential(device_id = device['id']['id'], token = TB_TOKEN)
-    new_device = tb.create_device(code, 'PSD','','localhost', '9090', TB_TOKEN)
+    new_device = tb.create_device(code, 'ESTAÇÃO METEREOLÓGICA','','localhost', '9090', TB_TOKEN)
     return tb.get_device_credential(device_id = new_device['id']['id'], token = TB_TOKEN)
-
+    
 
 
 consumer = KafkaConsumer(
@@ -51,7 +59,6 @@ consumer = KafkaConsumer(
 
 
 stationList = list(map(removeExtension,glob.glob('A*')))
-print(stationList)
 consumer.subscribe(stationList)
 client = getMqttClient(token,on_connect,on_publish)
 client.loop_start()

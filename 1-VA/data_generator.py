@@ -10,11 +10,15 @@ import random
 import os
 
 #Set a defaut path and get the csv's list 
+intervalo = 3600
+itervalo10x = 360
+intervalo100x = 36
+host = "localhost:9092"
 path = os.getcwd()
 files = glob.glob('A*.csv')
 
 # Create an instance of the Kafka producer
-producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: str(v).encode('utf-8'))
+producer = KafkaProducer(bootstrap_servers=host, value_serializer=lambda v: str(v).encode('utf-8'))
 
 def sendCSV(filename):
     try:
@@ -29,7 +33,7 @@ def sendCSV(filename):
                 message[column] = data[column]
             producer.send(topico,message)
             print('#Sent '+topico+":"+str(message))
-            time.sleep(4)
+            time.sleep(intervalo100x)
     except:
         print("Error")
 

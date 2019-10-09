@@ -76,7 +76,10 @@ def get_device_credential(device_id='', host='localhost', port='9090', token='')
 
     result = requests.get(url, headers=headers)
     data = json.loads(result.content)
-
+    #logging.warning("------------BODY-------------")
+    #logging.warning(headers)
+    #logging.warning("------------CONTENT-------------")
+    #logging.warning(result.content)
     if result.status_code == 200:
         credential = data['credentialsId']
         return credential
@@ -111,6 +114,9 @@ def create_device(device_name, device_type, device_label='', host='localhost', p
         logging.error('status response: {} -- {}'.format(data['status'], data['message']))
         return None
 
+
+def createDashboard():
+    token = 'Bearer {}'.format(token)
 
 
 ########################################################
