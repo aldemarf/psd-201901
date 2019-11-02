@@ -1,11 +1,10 @@
 from flask import Flask, make_response, jsonify, request
 from tb_api import *
-from math import acos, cos, sin, radians
+from math import acos, cos, sin, asin, sqrt, radians
 import logging
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-10s %(levelname)-6s %(message)s')
-
 
 help_ = """
         <strong>arg 1</strong>: t;</br>
@@ -47,16 +46,29 @@ def get_5_nearest():
         lon = request.args['lon']
 
         # TODO: CONTINUE IMPLEMENTATION
-        dist = EARTH_RADIUS * acos(
-            cos(radians(90 - lat)) * cos(radians(90 - latitude)) + sin(radians(90 - lat))
-            * sin(radians(90 - latitude)) * cos(radians(lon - longitude)))
-
-        stations = []
-        return jsonify({'stations': stations})
+        # stations = []
+        # return jsonify({'stations': stations})
 
     except Exception as e:
         logging.error(f'INVALID ENTRY: {e}')
-        return jsonify({'stations': None})
+    #     return jsonify({'stations': None})
+
+
+def dist_haversine(lat1, lon1, lat2, lon2, radius=6371):
+    """ Earth radius = 6.371km """
+
+    delta_lat = radians(lat2 - lat1)
+    delta_lon = radians(lon2 - lon1)
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
+
+    distance = 2 * radius * asin(
+        sqrt(
+            sin(delta_lat / 2) ** 2
+            + cos(lat1) * cos(lat2) * sin(delta_lon / 2) ** 2
+        )
+    )
+    return distance
 
 
 @app.errorhandler(400)
