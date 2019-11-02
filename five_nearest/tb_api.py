@@ -1,16 +1,15 @@
-#!/usr/bin/env python
-
 import json
 import logging
 import requests
 
 logging.basicConfig(level=logging.INFO)
 
+
 def get_tenant_token(host='localhost', port='9090', user='tenant@thingsboard.org', pwd='tenant'):
     """ Returns tenants token """
     user_id = {"username": user, "password": pwd}
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-    url = 'http://{}:{}/api/auth/login'.format(host, port)
+    url = f'http://{host}:{port}/api/auth/login'
 
     result = requests.post(url, json=user_id, headers=headers)
     data = json.loads(result.content)
@@ -19,15 +18,15 @@ def get_tenant_token(host='localhost', port='9090', user='tenant@thingsboard.org
         token = data['token']
         return token
     else:
-        logging.error('status response: {} -- {}'.format(data['status'], data['message']))
+        logging.error(f'status response: {data["status"]} -- {data["message"]}')
         return None
 
 
 def get_tenant_devices(host='localhost', port='9090', token='', **kwargs):
     """ Returns tenant attached devices """
-    token = 'Bearer {}'.format(token)
+    token = f'Bearer {token}'
     headers = {'Accept': 'application/json', 'X-Authorization': token}
-    url = 'http://{}:{}/api/tenant/devices?'.format(host, port)
+    url = f'http://{host}:{port}/api/tenant/devices?'
 
     deviceType = kwargs.get('deviceType')
     textSearch = kwargs.get('textSearch')
@@ -36,15 +35,15 @@ def get_tenant_devices(host='localhost', port='9090', token='', **kwargs):
     limit = kwargs.get('limit')
 
     if deviceType:
-        url += 'type={}&'.format(deviceType)
+        url += f'type={deviceType}&'
     if textSearch:
-        url += 'textSearch={}&'.format(textSearch)
+        url += f'textSearch={textSearch}&'
     if idOffset:
-        url += 'idOffset={}&'.format(idOffset)
+        url += f'idOffset={idOffset}&'
     if textOffset:
-        url += 'textOffset={}&'.format(textOffset)
+        url += f'textOffset={textOffset}&'
     if limit:
-        url += 'limit={}&'.format(limit)
+        url += f'limit={limit}&'
 
     url = url[:-1]
     result = requests.get(url, headers=headers)
@@ -54,7 +53,7 @@ def get_tenant_devices(host='localhost', port='9090', token='', **kwargs):
         devices = data['data']
         return devices
     else:
-        logging.error('status response: {} -- {}'.format(data['status'], data['message']))
+        logging.error(f'status response: {data["status"]} -- {data["message"]}')
         return None
 
 
@@ -78,22 +77,18 @@ def get_device_name(device):
 
 def get_device_credential(device_id='', host='localhost', port='9090', token=''):
     """ Returns a single device credential : String"""
-    token = 'Bearer {}'.format(token)
+    token = f'Bearer {token}'
     headers = {'Accept': 'application/json', 'X-Authorization': token}
-
-    url = 'http://{}:{}/api/device/{}/credentials'.format(host, port, device_id)
+    url = f'http://{host}:{port}/api/device/{device_id}/credentials'
 
     result = requests.get(url, headers=headers)
     data = json.loads(result.content)
-    #logging.warning("------------BODY-------------")
-    #logging.warning(headers)
-    #logging.warning("------------CONTENT-------------")
-    #logging.warning(result.content)
+
     if result.status_code == 200:
         credential = data['credentialsId']
         return credential
     else:
-        logging.error('status response: {} -- {}'.format(data['status'], data['message']))
+        logging.error('status response: {data["status"]} -- {data["message"]}')
         return None
 
 
@@ -109,9 +104,9 @@ def get_devices_credentials(devices_list=[], host='localhost', port='9090', toke
 
 def create_device(device_name, device_type, device_label='', host='localhost', port='9090', token=''):
     """ create a single device and returns its the TB object """
-    token = 'Bearer {}'.format(token)
+    token = f'Bearer {token}'
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Authorization': token}
-    url = 'http://{}:{}/api/device'.format(host, port)
+    url = 'http://{host}:{port}/api/device'
     device = {"name": device_name, "type": device_type, "label" : device_label}
 
     result = requests.post(url, headers=headers, json=device)
@@ -120,12 +115,13 @@ def create_device(device_name, device_type, device_label='', host='localhost', p
     if result.status_code == 200:
         return data
     else:
-        logging.error('status response: {} -- {}'.format(data['status'], data['message']))
+        logging.error(f'status response: {data["status"]} -- {data["message"]}')
         return None
 
 
-def createDashboard():
-    token = 'Bearer {}'.format(token)
+def create_dashboard(token):
+    token = f'Bearer {token}'
+    return NotImplemented
 
 
 ########################################################
