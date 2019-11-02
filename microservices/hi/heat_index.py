@@ -6,7 +6,6 @@ def ctf(temp):
 
 
 def heat_index(t=89.6, rh=35):
-
     hi = (1.1 * t) + (0.047 * rh) - 10.3
 
     if hi < 80:

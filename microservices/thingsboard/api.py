@@ -24,8 +24,7 @@ def get_tenant_token(host='localhost', port='9090', user='tenant@thingsboard.org
 
 def get_tenant_devices(host='localhost', port='9090', token='', **kwargs):
     """ Returns tenant attached devices """
-    token = f'Bearer {token}'
-    headers = {'Accept': 'application/json', 'X-Authorization': token}
+    headers = {'Accept': 'application/json', 'X-Authorization': f'Bearer {token}'}
     url = f'http://{host}:{port}/api/tenant/devices?'
 
     deviceType = kwargs.get('deviceType')
@@ -77,8 +76,7 @@ def get_device_name(device):
 
 def get_device_credential(device_id='', host='localhost', port='9090', token=''):
     """ Returns a single device credential : String"""
-    token = f'Bearer {token}'
-    headers = {'Accept': 'application/json', 'X-Authorization': token}
+    headers = {'Accept': 'application/json', 'X-Authorization': f'Bearer {token}'}
     url = f'http://{host}:{port}/api/device/{device_id}/credentials'
 
     result = requests.get(url, headers=headers)
@@ -104,10 +102,9 @@ def get_devices_credentials(devices_list=[], host='localhost', port='9090', toke
 
 def create_device(device_name, device_type, device_label='', host='localhost', port='9090', token=''):
     """ create a single device and returns its the TB object """
-    token = f'Bearer {token}'
-    headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Authorization': token}
-    url = 'http://{host}:{port}/api/device'
-    device = {"name": device_name, "type": device_type, "label" : device_label}
+    headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Authorization': f'Bearer {token}'}
+    url = f'http://{host}:{port}/api/device'
+    device = {"name": device_name, "type": device_type, "label": device_label}
 
     result = requests.post(url, headers=headers, json=device)
     data = json.loads(result.content)
@@ -117,6 +114,13 @@ def create_device(device_name, device_type, device_label='', host='localhost', p
     else:
         logging.error(f'status response: {data["status"]} -- {data["message"]}')
         return None
+
+
+def get_station_location(host='localhost', port='9090', token=''):
+    # headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Authorization': f'Bearer {token}'}
+    # url = f'http://{host}:{port}/api/device'
+    # device = {"name": device_name, "type": device_type, "label": device_label}
+    pass
 
 
 def create_dashboard(token):
