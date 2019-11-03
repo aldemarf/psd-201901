@@ -172,10 +172,10 @@ def start_generate_events():
 
 @app.route('/api/event_generator/stop', methods=['GET'])
 def stop_generate_events():
-    global running
     logging.info('Stopping events generation')
-    running = stop_generator()
-    return '<h3>Stopped events generation</h3>'
+    status = stop_generator()
+    return f'<h3>Stopped events generation</h3>' \
+           f'{status}'
 
 
 #################################################

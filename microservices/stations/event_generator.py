@@ -56,13 +56,25 @@ def read_stations_csv(path='./stations', pattern='A*.csv'):
 
 def stop_generator():
     global stop_gen
-    stop_gen = True
-    logging.warning(f'stop_gen set to TRUE')
-    return False
+    status = ''
+
+    if not stop_gen:
+        stop_gen = True
+        logging.warning(f'stop_gen set to TRUE')
+        time.sleep(2)
+
+    for thread in threads:
+        if thread.is_alive():
+            status += f'<strong>{thread.name} still running.</strong></br>\n'
+        else:
+            status += f'{thread.name} terminated.</br>\n'
+
+    return status
 
 
 def event_generator(processing='single', publish_interval=1):
-    global threads
+    global threads, stop_gen
+    stop_gen = False
 
     if processing.lower() == 'single':
         stations_serial_process(publish_interval)
