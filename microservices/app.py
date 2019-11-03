@@ -1,10 +1,12 @@
 from flask import Flask, make_response, jsonify, request, abort
 from stations.event_generator import event_generator, stop_generator
+from stations import bridge_kafka_tb
 from thingsboard.api import *
 from distance.haversine import *
 from hi.heat_index import *
+
 import logging
-import stations
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-10s %(levelname)-6s %(message)s')
 
@@ -176,6 +178,17 @@ def stop_generate_events():
     status = stop_generator()
     return f'<h3>Stopped events generation</h3>' \
            f'{status}'
+
+
+#################################################
+############### KAFKA TB BRIDGE #################
+#################################################
+
+
+@app.route('/api/bridge/start', methods=['GET'])
+def start_bridge():
+    bridge_kafka_tb.start_bridge()
+
 
 
 #################################################
