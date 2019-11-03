@@ -90,7 +90,7 @@ def get_device_credential(device_id='', host='localhost', port='9090', token='')
         return None
 
 
-def get_devices_credentials(devices_list=[], host='localhost', port='9090', token=''):
+def get_devices_credentials(devices_list=(), host='localhost', port='9090', token=''):
     """ Returns a dictionary with device id and its credential {id : credential}"""
     if len(devices_list) == 0:
         return None
