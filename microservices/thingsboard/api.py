@@ -86,7 +86,7 @@ def get_device_credential(device_id='', host='localhost', port='9090', token='')
         credential = data['credentialsId']
         return credential
     else:
-        logging.error('status response: {data["status"]} -- {data["message"]}')
+        logging.error(f'status response: {data["status"]} -- {data["message"]}')
         return None
 
 
@@ -102,7 +102,9 @@ def get_devices_credentials(devices_list=(), host='localhost', port='9090', toke
 
 def create_device(device_name, device_type, device_label='', host='localhost', port='9090', token=''):
     """ create a single device and returns its the TB object """
-    headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Authorization': f'Bearer {token}'}
+    headers = {'Content-Type': 'application/json',
+               'Accept': 'application/json',
+               'X-Authorization': f'Bearer {token}'}
     url = f'http://{host}:{port}/api/device'
     device = {"name": device_name, "type": device_type, "label": device_label}
 
@@ -116,11 +118,46 @@ def create_device(device_name, device_type, device_label='', host='localhost', p
         return None
 
 
-def get_station_location(host='localhost', port='9090', token=''):
-    # headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Authorization': f'Bearer {token}'}
-    # url = f'http://{host}:{port}/api/device'
-    # device = {"name": device_name, "type": device_type, "label": device_label}
-    pass
+def get_latest_telemetry(entity_id, entity_type='DEVICE', keys='', port='9090', host='localhost', token=''):
+    """ Get the latest telemetry from de device and the specified keys """
+    headers = {'Content-Type': 'application/json',
+               'Accept': 'application/json',
+               'X-Authorization': f'Bearer {token}'}
+    if len(keys) > 0:
+        keys = f'?keys={keys}'
+
+    url = f'http://{host}:{port}/api/plugins/telemetry/{entity_type}/{entity_id}/values/timeseries{keys}'
+
+    result = requests.get(url, headers=headers)
+    data = json.loads(result.content)
+
+    if result.status_code == 200:
+        return data
+    else:
+        logging.error(f'status response: {data["status"]} -- {data["message"]}')
+        return None
+
+
+def get_latest_telemetry_wo_timestamp(entity_id, entity_type='DEVICE', keys='', port='9090', host='localhost', token=''):
+    """ Get the latest telemetry from de device and the specified keys """
+    headers = {'Content-Type': 'application/json',
+               'Accept': 'application/json',
+               'X-Authorization': f'Bearer {token}'}
+    if len(keys) > 0:
+        keys = f'?keys={keys}'
+
+    url = f'http://{host}:{port}/api/plugins/telemetry/{entity_type}/{entity_id}/values/timeseries{keys}'
+
+    result = requests.get(url, headers=headers)
+    data = json.loads(result.content)
+    clean_data = {key: telemetry[0]['value'] for key, telemetry in data.items()}
+
+    if result.status_code == 200:
+        return clean_data
+    else:
+        logging.error(f'status response: {data["status"]} -- {data["message"]}')
+        return None
+
 
 
 def create_dashboard(token):
