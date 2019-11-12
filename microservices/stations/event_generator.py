@@ -40,6 +40,7 @@ def kafka_producer(host=HOST, serializer=encode_utf8, attempts=ATTEMPTS):
 
 
 def read_stations_csv(path='./stations', pattern='A*.csv'):
+    """  """
     stations_data = {}
     csv_files = glob.glob(pathname=f'{path}/{pattern}')
 
@@ -55,68 +56,78 @@ def read_stations_csv(path='./stations', pattern='A*.csv'):
 
 
 def stop_generator():
-    global stop_gen
+    global stop_gen, threads
     status = ''
 
     if not stop_gen:
         stop_gen = True
         logging.warning(f'stop_gen set to TRUE')
-        time.sleep(2)
+        time.sleep(1.5)
 
-    for thread in threads:
-        if thread.is_alive():
-            status += f'<strong>{thread.name} still running.</strong></br>\n'
-        else:
-            status += f'{thread.name} terminated.</br>\n'
+    if len(threads) > 1:
+        for thread in threads:
+            if thread.is_alive():
+                status += f'<strong>{thread.name} still running.</strong></br>\n'
+            else:
+                status += f'{thread.name} terminated.</br>\n'
+    else:
+        status = 'Single threaded process terminated.</br>\n'
 
     return status
 
 
-def event_generator(processing='single', publish_interval=1):
-    global threads, stop_gen
-    stop_gen = False
+def process_all_stations(publish_interval=PUBLISH_INTERVAL_100X):
+    global stop_gen, threads
 
-    if processing.lower() == 'single':
-        stations_serial_process(publish_interval)
-        return True
-    elif processing.lower() == 'multi':
-        stations_parallel_process(publish_interval)
-        return True
-    else:
+    try:
+        stations_data = read_stations_csv()
+        stations_running = {threads.name for thread in threads}
+
+        for station_code, data in stations_data.items():
+            if stop_gen:
+                logging.info('Stopping events generation')
+                break
+            if station_code in stations_running:
+                continue
+
+            thread = Thread(target=process_station,
+                            args=(data, publish_interval),
+                            name=f'Thread-STA_{station_code}')
+            threads.add(thread)
+            thread.daemon = False
+            thread.start()
+            logging.info(f'Started Thread-STA_{station_code}')
+
+    except Exception as error:
         return False
 
 
-def stations_parallel_process(publish_interval=PUBLISH_INTERVAL_100X):
+def process_single_station(station, publish_interval=PUBLISH_INTERVAL_100X):
     global stop_gen, threads
 
     stations_data = read_stations_csv()
 
-    for station_code, station_data in stations_data.items():
-        if stop_gen:
-            logging.info('Stopping events generation')
-            break
-        thread = Thread(target=process_station,
-                        args=(station_data, publish_interval),
-                        name=f'Thread-STA_{station_code}')
-        threads.add(thread)
-        thread.daemon = False
-        thread.start()
-        logging.info(f'Started Thread-STA_{station_code}')
+    if station not in stations_data:
+        return False
 
+    try:
+        station_data = stations_data[station]
 
-def stations_serial_process(publish_interval=PUBLISH_INTERVAL_100X):
-    global stop_gen
-    stations_data = read_stations_csv()
+    except KeyError as error:
+        logging.error('Invalid station ID -- Try again.')
+        return
 
-    for staCode, station_data in stations_data.items():
-        if stop_gen:
-            logging.info('Stopping events generation')
-            break
-        process_station(station_data, publish_interval)
+    thread = Thread(target=process_station,
+           args=(station_data, publish_interval),
+           name=f'Thread-STA_{station}')
+    threads.add(thread)
+
+    return threads
 
 
 def process_station(station_data, publish_interval=PUBLISH_INTERVAL_100X):
     global stop_gen
+
     try:
         index = 1
         producer = kafka_producer()
