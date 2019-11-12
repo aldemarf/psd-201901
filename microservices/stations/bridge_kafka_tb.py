@@ -8,6 +8,7 @@ from kafka import KafkaConsumer
 
 stop_feed = False
 
+
 def encode_utf8(v, encoding='utf-8'):
     return json.dumps(v).encode(encoding)
 
@@ -34,8 +35,8 @@ def create_regex_pattern(path='./stations', pattern='A*.csv'):
 
 def get_stations_info(path='./stations', pattern='A*.csv'):
     """ get information from all stations with .csv at given path"""
-    csv_files = glob.glob(f'{path}/{pattern}')
     stations = {}
+    csv_files = glob.glob(pathname=f'{path}/{pattern}')
 
     for path in csv_files:
         with open(path) as data:
@@ -43,9 +44,7 @@ def get_stations_info(path='./stations', pattern='A*.csv'):
             reading = next(station_csv)
 
         station_code = reading['stationCode'].strip()
-        if station_code in stations:
-            continue
-        else:
+        if station_code not in stations:
             stations[station_code] = reading['stationName'].strip()
 
     return stations
@@ -138,7 +137,7 @@ def start_bridge(host='localhost', port=1883, topic='v1/devices/me/telemetry'):
 
 def stop_bridge():
     global stop_feed
-    stop_feed =  True
+    stop_feed = True
 
 ########################################################
 ################       TEST FIELD       ################
