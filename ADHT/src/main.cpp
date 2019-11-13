@@ -1,27 +1,30 @@
-
 #include <DHT.h>
 #include <DHT_U.h>
 #include <ESP8266WiFi.h>
-#include <ThingsBoard.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>
+#include "ThingsBoard.h"
 
-#define SSID "AAAA"
-#define NW_PWD "********"
-#define TOKEN "********"
-#define DHTPIN 2
+#define DHTPIN D3
 #define DHTTYPE DHT11
 
-char thingsboardServer[] = "localhost";
-int status = WL_IDLE_STATUS;
-unsigned long lastSend;
-WiFiClient wifiClient;
+char hostname[] = "hostname";
+char token[] = "token";
 
-DHT dht(DHTPIN, DHTTYPE);
+WiFiClient wifiClient;
 ThingsBoard tb(wifiClient);
+DHT dht(DHTPIN, DHTTYPE);
+
+
+void configModeCallback (WiFiManager *myWiFiManager) {
+    Serial.println("Entered config mode");
+    Serial.println(WiFi.softAPIP());
+    Serial.println(myWiFiManager->getConfigPortalSSID());
+}
 
 
 void sendData() {
-    Serial.println("Reading...");
-
     float humidity = dht.readHumidity();
     float temperature = dht.readTemperature();
 
@@ -32,43 +35,21 @@ void sendData() {
 
     Serial.print(humidity);
     Serial.print("\t");
-    Serial.print(temperature);
-
+    Serial.println(temperature);
     tb.sendTelemetryFloat("temperature", temperature);
     tb.sendTelemetryFloat("humidity", humidity);
 }
 
 
-void InitWiFi() {
-    Serial.println("Connecting...");
-    WiFi.begin(SSID, NW_PWD);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("Connected to WiFi");
-}
-
-
-void reconnect() {
+void connect_tb() {
+    Serial.println("Connecting to ThingsBoard");
     while (!tb.connected()) {
-        status = WiFi.status();
-        if ( status != WL_CONNECTED) {
-            WiFi.begin(SSID, NW_PWD);
-            while (WiFi.status() != WL_CONNECTED) {
-                delay(500);
-                Serial.print('.');
-            }
-            Serial.println("Reconnected to WiFi");
-        }
-
-        Serial.print("Connecting to ThingsBoard");
-        if ( tb.connect(thingsboardServer, TOKEN) ) {
-            Serial.println("CONNECTED");
+        if (tb.connect(hostname, token)) {
+            Serial.println("[CONNECTED]");
         } else {
-            Serial.print("ERROR");
-            Serial.println( " : retrying in 5 seconds]" );
-            delay(5000);
+            Serial.print("[ERROR]");
+            Serial.println( " : retrying in 3 second" );
+            delay(3000);
         }
     }
 }
@@ -77,20 +58,26 @@ void reconnect() {
 void setup() {
     Serial.begin(115200);
     dht.begin();
-    InitWiFi();
-    lastSend = 0;
+
+    WiFiManager wifiManager;
+    wifiManager.setAPCallback(configModeCallback);
+    wifiManager.autoConnect();
+    // wifiManager.resetSettings();
+
+    if (WiFi.waitForConnectResult() == WL_CONNECTED) {
+        Serial.println("Conectado!");
+        connect_tb();
+    }
 }
 
 
 void loop() {
     if (!tb.connected()) {
-        reconnect();
+        connect_tb();
     }
 
-    if (millis() - lastSend > 1000) { // Update and send only after 1 seconds
-        sendData();
-        lastSend = millis();
-    }
+    sendData();
+    delay(1000);
 
     tb.loop();
 }
