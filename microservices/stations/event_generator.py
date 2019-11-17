@@ -101,6 +101,8 @@ def process_all_stations(publish_interval=PUBLISH_INTERVAL_100X):
     except Exception as error:
         return False
 
+    return True
+
 
 def process_single_station(station, publish_interval=PUBLISH_INTERVAL_100X):
     global stop_gen, threads
