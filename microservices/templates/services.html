@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Services</title>
+</head>
+<body>
+    <h2>SERVICES</h2>
+    <table style="width: 60%; text-align: center">
+        <tr>
+            <th>Description</th>
+            <th>Endpoint</th>
+            <th>Execute</th>
+        </tr>
+        <tr>
+            <td>Heat Index Microservice</td>
+            <td>/api/heat_index/</td>
+            <td>
+                <input type="button"
+                       onclick="window.open('/api/heat_index', '','width=500,height=400');"
+                       value="Start" />
+            </td>
+        </tr>
+        <tr>
+            <td>Event Generator (Start) Microservice</td>
+            <td>/api/event_generator/start</td>
+            <td>
+                <input type="button"
+                       onclick="window.open('/api/event_generator/start', '','width=500,height=400');"
+                       value="Start" />
+            </td>
+        </tr>
+        <tr>
+            <td>Event Generator (Stop) Microservice</td>
+            <td>/api/event_generator/stop</td>
+            <td>
+                <input type="button"
+                       onclick="window.open('/api/event_generator/stop', '','width=500,height=400');"
+                       value="Stop" />
+            </td>
+        </tr>
+        <tr>
+            <td>MQTT Bridge (Start) Microservice</td>
+            <td>/api/bridge/start</td>
+            <td>
+                <input type="button"
+                       onclick="window.open('/api/bridge/start', '','width=500,height=400');"
+                       value="Start" />
+            </td>
+
+        </tr>
+        <tr>
+            <td>MQTT Bridge (Stop) Microservice</td>
+            <td>/api/bridge/stop</td>
+            <td>
+                <input type="button"
+                       onclick="window.open('/api/bridge/stop', '','width=500,height=400');"
+                       value="Stop" />
+            </td>
+        </tr>
+
+    </table>
+
+</body>
+</html>
