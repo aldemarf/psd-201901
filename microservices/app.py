@@ -1,9 +1,8 @@
-from flask import Flask, make_response, jsonify, request, abort
+from flask import Flask, make_response, jsonify, request, abort, render_template
 from stations.event_generator import process_all_stations, process_single_station, stop_generator
 from stations import bridge_kafka_tb
 from thingsboard.api import *
-from distance.haversine import *
-from hi.heat_index import *
+from distance.method import *
 
 import logging
 
@@ -11,6 +10,12 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-10s %(levelname)-6s %(message)s')
 
 app = Flask(__name__)
+
+
+@app.route('/')
+def api():
+    return render_template('services.html')
+
 
 #################################################
 ################## 5-NEAREST ####################
@@ -86,24 +91,21 @@ help_heat_index = """
 """
 
 
-@app.route('/api/hi/status')
+@app.route('/api/heat_index/status')
 def status_hi():
     return 'Server : Running'
 
 
-@app.route('/api/hi/help')
+@app.route('/api/heat_index/help')
 def show_help_hi():
     return help_heat_index
 
 
-@app.route('/api/hi/', methods=['GET'])
+@app.route('/api/heat_index/', methods=['GET'])
 def calc_hi():
     try:
         data = request.args
         temp = float(data['temp'])
-        rh = float(data['rh'])
-        hi = heat_index(temp, rh)
-        return jsonify({'heat_index': hi})
 
     except Exception as e:
         logging.error(f'INVALID ENTRY: {e}')
@@ -242,4 +244,4 @@ def not_found(error):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5050, debug=True)
