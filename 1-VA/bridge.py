@@ -1,7 +1,11 @@
 from kafka import KafkaConsumer
 import paho.mqtt.client as mqtt
 import json
+from kafka import KafkaConsumer
+import paho.mqtt.client as mqtt
+import json
 import time
+import threading
 import random
 import glob
 import tb_api as tb
@@ -12,9 +16,6 @@ token = "nx2JMXjH5CbC27eDHwGL"
 PORT = 1883
 #KAFKA_HOST = "172.16.206.12:9092"
 KAFKA_HOST = "localhost:9092"
-
-
-devices = tb.get_tenant_devices(token = TB_TOKEN,deviceType = 'PSD',limit=100)
 
 
 def on_connect(client,data, flags, rc):
@@ -34,13 +35,7 @@ def getMqttClient(token,on_connect, on_publish):
     client.connect(HOST,PORT,60)
     return client 
 
-def getDeviceToken(code):   
-    #credential = tb.get_device_credential(device_id=code,token=TB_TOKEN)
-    #if credential == None:
-    #    new_device = tb.create_device(code, 'ESTAÇÃO METEREOLÓGICA','','localhost', '9090', TB_TOKEN)
-    #    credential = tb.get_device_credential(device_id=code,token=TB_TOKEN)
-    #    print("---------NEW DEVICE----------")
-    #    print(new_device)
+def getDeviceToken(code): 
     devices = tb.get_tenant_devices(token = TB_TOKEN,deviceType = 'ESTAÇÃO METEREOLÓGICA',limit=100)
     for device in devices:
         if device['name'] == code:
@@ -49,30 +44,39 @@ def getDeviceToken(code):
     return tb.get_device_credential(device_id = new_device['id']['id'], token = TB_TOKEN)
     
 
-
-consumer = KafkaConsumer(
+def createConsumer(topic):
+    consumer = KafkaConsumer(
     bootstrap_servers=['localhost:9092'],
     auto_offset_reset='earliest',
-    enable_auto_commit=True,
+    enable_auto_commit=True,                                       
     group_id='my-group',
     value_deserializer=lambda v: v.decode('utf-8'))
+    consumer.subscribe(topic)
+    return consumer
+
+
+def initSending(consumer,token = token):
+    client = getMqttClient(token,on_connect,on_publish)
+    client.loop_start()
+    while True:
+        for message in consumer:
+            token = getDeviceToken(json.loads(message.value.replace("'",'"'))['stationCode'])
+            print(json.loads(message.value.replace("'",'"'))['stationCode'])
+            client.username_pw_set(token)
+            data = str(message.value)
+            retorno = client.publish("v1/devices/me/telemetry",data)
+            print(retorno)
+            time.sleep(10)
+
+def createThread(consumer):
+    t= threading.Thread(target=initSending,args=(consumer,))
+    t.start()
+    return "process started"
 
 
 stationList = list(map(removeExtension,glob.glob('A*')))
-consumer.subscribe(stationList)
-client = getMqttClient(token,on_connect,on_publish)
-client.loop_start()
-
-
-while True:
-    for message in consumer:
-        token = getDeviceToken(json.loads(message.value.replace("'",'"'))['stationCode'])
-        client.username_pw_set(token)
-        data = str(message.value)
-        retorno = client.publish("v1/devices/me/telemetry",data)
-        time.sleep(2)
-
-
+consumerList = list(map(createConsumer,stationList))
+threading  = list(map(createThread,consumerList))
 
 
 
