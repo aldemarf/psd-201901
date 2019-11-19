@@ -1,12 +1,10 @@
+from threading import Thread
 from flask import Flask, make_response, jsonify, request, abort, render_template
-
-from conf import PUBLISH_INTERVAL
-from distance import calc_distance, nearest
-from heat_index import start_hi_calc
+from conf import PUBLISH_INTERVAL, KAFKA_HOST, KAFKA_PORT
+from distance import nearest
+from heat_index import start_hi_calc, stop_heat_index, create_spark_session
 from stations.event_generator import process_all_stations, process_single_station, stop_generator
 from stations import bridge_kafka_tb
-from thingsboard.api import *
-from distance.method import *
 
 import logging
 
@@ -14,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-10s %(levelname)-6s %(message)s')
 
 app = Flask(__name__)
-
+sparkSession = None
 
 @app.route('/')
 def api():
@@ -82,12 +80,27 @@ def show_help_hi():
     return 'Starts Heat Index Spark Service'
 
 
-@app.route('/api/heat_index/', methods=['GET'])
+@app.route('/api/heat_index/start', methods=['GET'])
 def calc_hi():
-    start_hi_calc()
+    global threads, sparkSession
+
+    sparkSession = create_spark_session()
+    thread = Thread(target=start_hi_calc,
+                    args=(sparkSession, KAFKA_HOST, KAFKA_PORT),
+                    name=f'Thread-Spark_HeatIndex')
+    threads.add(thread)
+    thread.daemon = False
+    thread.start()
+    logging.info(f'Started Thread-Spark_HeatIndex')
 
     return f'<h2>Heat Index Calculation: OK!<h2>' \
-               f'Processing all stations HI</br>'
+           f'Processing all stations HI</br>'
+
+
+@app.route('/api/heat_index/stop', methods=['GET'])
+def stop_calc_hi():
+    global threads, sparkSession
+    return stop_heat_index(sparkSession, threads)
 
 
 #################################################
@@ -146,10 +159,11 @@ def start_generate_events():
 def start_generate_events_single_station(station):
     global threads
 
-    stations = {thread.name for thread in threads}
+    if len(threads) > 1:
+        stations = {thread.name for thread in threads}
 
-    if running and station in stations:
-        return abort(405)
+        if running and station in stations:
+            return abort(405)
 
     try:
         interval = float(request.args['interval'])
@@ -192,9 +206,8 @@ def start_bridge():
 @app.route('/api/bridge/stop', methods=['GET'])
 def stop_MQTT_bridge():
     logging.info('Stopping events generation')
-    status = bridge_kafka_tb.stop_bridge()
-    return f'<h3>Stopped events generation</h3>' \
-           f'{status}'
+    bridge_kafka_tb.stop_bridge()
+    return f'<h3>Stopped events generation</h3>'
 
 
 
