@@ -71,10 +71,11 @@ def stop_generator():
 
     if len(threads) > 1:
         for thread in threads:
-            if thread.is_alive():
-                status += f'<strong>{thread.name} still running.</strong></br>\n'
+            name = thread.name
+            if name[:10] == 'Thread-STA' and thread.is_alive():
+                status += f'<strong>{name} still running.</strong></br>\n'
             else:
-                status += f'{thread.name} terminated.</br>\n'
+                status += f'{name} terminated.</br>\n'
     else:
         status = 'Single threaded process terminated.</br>\n'
 
