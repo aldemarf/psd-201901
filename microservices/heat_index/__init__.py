@@ -70,28 +70,29 @@ def get_stations_hi(station_type='ESTAÇÃO METEOROLÓGICA'):
     return stations_heat_index
 
 
-def start_hi_calc(host=KAFKA_HOST, port=KAFKA_PORT):
+def create_spark_session():
+    spark = SparkSession.builder \
+        .appName('HeatIndex') \
+        .getOrCreate()
+    return spark
+
+
+def start_hi_calc(sparkSession, host=KAFKA_HOST, port=KAFKA_PORT):
     try:
-        # consumer = KafkaConsumer(group_id='topics', bootstrap_servers=[f'{host}:{port}'])
-        # topics_list = [topic for topic in consumer.topics() if topic[:8] == 'estacoes']
-        # topics = ','.join(topics_list)
-        # consumer.close()
         subscribe_type = 'subscribePattern'
         topics_pattern = 'estacoes.*'
         startingOffset = 'latest'
 
-        spark = SparkSession.builder\
-            .appName('HeatIndex')\
-            .getOrCreate()
+        spark = sparkSession
 
         df = spark.readStream \
             .format('kafka') \
             .option('kafka.bootstrap.servers', f'{host}:{port}') \
             .option(subscribe_type, topics_pattern) \
             .option('startingOffsets', startingOffset) \
-            .option('maxOffsetsPerTrigger', '1') \
             .load() \
             .selectExpr('CAST(value AS STRING)')
+        # .option('maxOffsetsPerTrigger', '1') \
 
         schema = StructType() \
             .add('timestamp', StringType()) \
@@ -126,15 +127,30 @@ def start_hi_calc(host=KAFKA_HOST, port=KAFKA_PORT):
         #     .outputMode("append")\
         #     .format("console")\
         #     .start()
-        # consoleOutput.awaitTermination(timeout=10)
+        # consoleOutput.awaitTermination(timeout=1)
 
-        ds = heat_index_df\
-            .writeStream \
+        kafkaOutput = heat_index_df.writeStream\
             .foreach(RowPublisher()) \
             .start()
-
-        return True
 
     except Exception as error:
         logging.error(error)
         return False
+
+
+def stop_heat_index(sparkSession, threads):
+    status = ''
+
+    sparkSession.stop()
+
+    if len(threads) > 1:
+        for thread in threads:
+            name = thread.name
+            if name == 'Thread-Spark_HeatIndex' and thread.is_alive():
+                status += f'<strong>{name} still running.</strong></br>\n'
+            else:
+                status += f'{name} terminated.</br>\n'
+    else:
+        status = 'Heat Index calculation terminated.</br>\n'
+
+    return status
