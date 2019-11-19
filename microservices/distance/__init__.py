@@ -37,8 +37,7 @@ def nearest(lat, lon, n=1, method='haversine'):
     stations = calc_distance(lat, lon, method=method)
     stations = [(item[0], item[1]['distance']) for item in stations.items()]
     stations.sort(key=lambda item: item[1])
-    n_nearest = stations[:n]
-    return n_nearest
+    return dict(stations[:n])
 
 
 # print(nearest(-8.063149, -34.871098, 8, 'haversine '))  # Marco-Zero coord.
