@@ -6,11 +6,12 @@ import logging
 from threading import Thread
 from kafka import KafkaProducer
 from kafka.errors import BrokerNotAvailableError, NoBrokersAvailable
+from conf import KAFKA_HOST, KAFKA_PORT
 
 
 logging.basicConfig(level=logging.INFO)
 
-HOST = 'localhost:9092'
+HOST = f'{KAFKA_HOST}:{KAFKA_PORT}'
 ATTEMPTS = 3
 ENCODING = 'utf-8'
 PUBLISH_INTERVAL_1X = 3600
@@ -24,8 +25,12 @@ threads = set()
 logging.warning(f'stop_gen set to FALSE')
 
 
-def encode_utf8(v):
-    return json.dumps(v).encode(ENCODING)
+def encode_utf8(v, encoding='utf-8'):
+    return json.dumps(v).encode(encoding)
+
+
+def decode_utf8(v, encoding='utf-8'):
+    return json.loads(v.decode(encoding))
 
 
 def kafka_producer(host=HOST, serializer=encode_utf8, attempts=ATTEMPTS):
@@ -99,6 +104,7 @@ def process_all_stations(publish_interval=PUBLISH_INTERVAL_100X):
             logging.info(f'Started Thread-STA_{station_code}')
 
     except Exception as error:
+        logging.error(error)
         return False
 
     return True
@@ -138,6 +144,7 @@ def process_station(station_data, publish_interval=PUBLISH_INTERVAL_100X):
                 logging.info('Stopping events generation')
                 producer.close()
                 break
+            staName = staName.replace(' ', '')
             producer.send(f'estacoes.{staName}.{staCode}', reading)
             logging.info(f'Station {staCode} - {staName} : Message #{index} sent')
             index += 1

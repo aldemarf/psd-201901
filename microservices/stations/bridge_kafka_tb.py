@@ -4,17 +4,13 @@ import glob
 from thingsboard.api import *
 from paho.mqtt import publish
 from kafka import KafkaConsumer
+from conf import KAFKA_HOST, KAFKA_PORT, TB_HOST, TB_PORT, TB_MQTT_PORT, TB_TOPIC
 
+from stations.event_generator import encode_utf8, decode_utf8
+
+HOST = f'{KAFKA_HOST}:{KAFKA_PORT}'
 
 stop_feed = False
-
-
-def encode_utf8(v, encoding='utf-8'):
-    return json.dumps(v).encode(encoding)
-
-
-def decode_utf8(v, encoding='utf-8'):
-    return json.loads(v.decode(encoding))
 
 
 def create_regex_pattern(path='./stations', pattern='A*.csv'):
@@ -61,7 +57,7 @@ def create_met_stations(stations):
     else:
         token = get_tenant_token()
         create = create_device
-        devices = [create(code, 'ESTAÇÃO METEREOLÓGICA', device_label=name, token=token)
+        devices = [create(code, 'ESTAÇÃO METEREOLÓGICA', device_label=name.replace(' ', ''), token=token)
                    for code, name in stations.items()]
     return devices
 
@@ -71,7 +67,7 @@ def create_met_stations(stations):
 ########################################################
 
 
-def start_consumer(host='localhost:9092', deserializer=decode_utf8):
+def start_consumer(host=HOST, deserializer=decode_utf8):
 
     consumer = KafkaConsumer(
         bootstrap_servers=host,
@@ -88,7 +84,7 @@ def start_consumer(host='localhost:9092', deserializer=decode_utf8):
 ####################   MQTT FEEDER   ###################
 ########################################################
 
-def start_bridge(host='localhost', port=1883, topic='v1/devices/me/telemetry'):
+def start_bridge(host=TB_HOST, port=TB_MQTT_PORT, topic=TB_TOPIC):
     global stop_feed
 
     tenant_token = get_tenant_token()
