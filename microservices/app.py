@@ -1,4 +1,8 @@
 from flask import Flask, make_response, jsonify, request, abort, render_template
+
+from conf import PUBLISH_INTERVAL
+from distance import calc_distance, nearest
+from heat_index import start_hi_calc
 from stations.event_generator import process_all_stations, process_single_station, stop_generator
 from stations import bridge_kafka_tb
 from thingsboard.api import *
@@ -35,7 +39,6 @@ help_5_nearest = """
         <strong>Examples:</strong></br>
         http://host/api/5near?lat=-34.06218487&lon=-8.41657131
         </br> """
-# ()-> JSON{distance: 16.345000000000002} (km)
 
 
 @app.route('/api/5near/status')
@@ -55,11 +58,9 @@ def get_5_nearest():
         lat = float(data['lat'])
         lon = float(data['lon'])
 
-        distance = haversine(lat, lon, lat2=-8.0453602, lon2=-34.941812)
+        distance = nearest(lat, lon, 5)
 
-        # TODO: CONTINUE IMPLEMENTATION
-        # stations = []
-        return jsonify({'distance': distance})
+        return jsonify(distance)
 
     except Exception as e:
         logging.error(f'INVALID ENTRY: {e}')
@@ -71,26 +72,6 @@ def get_5_nearest():
 #################################################
 
 
-help_heat_index = """
-        <strong>arg 1</strong>: t;</br>
-        <strong>description</strong>: The instant temperature measured at the station;</br>
-        </br>
-        <strong>arg 2</strong>: rh;</br>
-        <strong>description</strong>: The instant relative humidity measured at the station;</br>
-        </br>
-        <strong>return</strong>: Return the Heat Index as a float number;</br>
-        </br>
-        </br>
-        <strong>Examples:</strong></br>
-        http://host/api/hi?temp=33.2&rh=55</br>
-        -> JSON{heat_index: 25.335000000000004}</br>
-        </br>
-        http://host/api/hi?temp=30&rh=60.7
-        </br>
-        -> JSON{heat_index: 24.345000000000002}
-"""
-
-
 @app.route('/api/heat_index/status')
 def status_hi():
     return 'Server : Running'
@@ -98,18 +79,15 @@ def status_hi():
 
 @app.route('/api/heat_index/help')
 def show_help_hi():
-    return help_heat_index
+    return 'Starts Heat Index Spark Service'
 
 
 @app.route('/api/heat_index/', methods=['GET'])
 def calc_hi():
-    try:
-        data = request.args
-        temp = float(data['temp'])
+    start_hi_calc()
 
-    except Exception as e:
-        logging.error(f'INVALID ENTRY: {e}')
-        return jsonify({'heat_index': None})
+    return f'<h2>Heat Index Calculation: OK!<h2>' \
+               f'Processing all stations HI</br>'
 
 
 #################################################
@@ -150,7 +128,7 @@ def start_generate_events():
     try:
         interval = float(request.args['inter'])
     except KeyError as error:
-        interval = 2
+        interval = PUBLISH_INTERVAL
         logging.warning(error)
 
     logging.info('Starting events generation')
@@ -176,7 +154,7 @@ def start_generate_events_single_station(station):
     try:
         interval = float(request.args['interval'])
     except KeyError as error:
-        interval = 2
+        interval = PUBLISH_INTERVAL
         logging.warning(error)
 
     logging.info(f'Starting events generation from station {station}')
@@ -244,4 +222,4 @@ def not_found(error):
 
 
 if __name__ == '__main__':
-    app.run(port=5050, debug=True)
+    app.run(debug=True)
