@@ -9,15 +9,24 @@ class RowPublisher:
     producer = KafkaProducer(
         bootstrap_servers=f'{KAFKA_HOST}:{KAFKA_PORT}',
         value_serializer=encode_utf8,
-        acks='all')
+        max_in_flight_requests_per_connection=1,
+        retries=2,
+        acks=1
+    )
 
     def open(self, partition_id, epoch_id):
-        return self.producer.bootstrap_connected()
+        logging.info('Opening Kafka Producer -- SPARK FOREACHWRITER')
+        return True  #self.producer.bootstrap_connected()
 
     def process(self, row):
-        data = encode_utf8({"heatIndex": row.heat_index})
-        logging.info(data)
-        self.producer.send(topic=f'estacoes.{row.staName}.{row.staCode}', value=data)
+        try:
+            staName = row.stationName.strip()
+            staCode = row.stationCode.strip()
+            data = {"stationName": staName, "stationCode": staCode, "heat_index": row.heat_index}
+            self.producer.send(topic=f'estacoes.{staName}.{staCode}', value=data)
+            logging.info(f'Station {staName} - {staCode} : {data}')
+        except Exception as error:
+            logging.error(f'SPARK -- ForEachWriter : {error}')
 
     def close(self, error):
         logging.error(error)
