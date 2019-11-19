@@ -1,5 +1,6 @@
 import csv
 import glob
+import time
 
 from thingsboard.api import *
 from paho.mqtt import publish
@@ -71,7 +72,7 @@ def start_consumer(host=HOST, deserializer=decode_utf8):
 
     consumer = KafkaConsumer(
         bootstrap_servers=host,
-        auto_offset_reset='earliest',
+        auto_offset_reset='latest',
         enable_auto_commit=True,
         value_deserializer=deserializer)
 
@@ -119,7 +120,7 @@ def start_bridge(host=TB_HOST, port=TB_MQTT_PORT, topic=TB_TOPIC):
 
             msg_index += 1
             logging.info(f'Message #{msg_index} published. Device: {device_code}')
-            # time.sleep(1.5)
+            time.sleep(5)
 
     except Exception as error:
         logging.error(error)
@@ -134,20 +135,3 @@ def start_bridge(host=TB_HOST, port=TB_MQTT_PORT, topic=TB_TOPIC):
 def stop_bridge():
     global stop_feed
     stop_feed = True
-
-########################################################
-################       TEST FIELD       ################
-########################################################
-
-# stations = get_stations_info()
-# devices = create_met_stations(stations)
-# print(devices)
-
-# for message in consumer:
-#     print(f'{message.topic}')
-#     print(message.value)
-
-
-########################################################
-################       TEST FIELD       ################
-########################################################
