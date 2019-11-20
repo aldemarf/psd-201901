@@ -16,7 +16,7 @@ pyspark-stubs==2.4.0.post6
 pyTelegramBotAPI==3.6.6
 python-dateutil==2.8.1
 pytz==2019.3
-requests==2.7.0
+requests==2.22.0
 six==1.12.0
 spark==0.2.1
 urllib3==1.25.6
