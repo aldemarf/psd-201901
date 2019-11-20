@@ -2,7 +2,7 @@ from threading import Thread
 from flask import Flask, make_response, jsonify, request, abort, render_template
 from conf import PUBLISH_INTERVAL, KAFKA_HOST, KAFKA_PORT
 from distance import nearest
-from heat_index import start_hi_calc, stop_heat_index, create_spark_session
+from heat_index import start_hi_calc, stop_heat_index, create_spark_session, heat_index_api
 from stations.event_generator import process_all_stations, process_single_station, stop_generator
 from stations import bridge_kafka_tb
 
@@ -61,8 +61,9 @@ def get_5_nearest():
         data = request.args
         lat = float(data['lat'])
         lon = float(data['lon'])
+        n = int(data['n'])
 
-        distance = nearest(lat, lon, 5)
+        distance = nearest(lat, lon, n)
 
         return jsonify(distance)
 
@@ -107,6 +108,24 @@ def calc_hi():
 def stop_calc_hi():
     global threads, sparkSession
     return stop_heat_index(sparkSession, threads)
+
+
+@app.route('/api/heat_index/', methods=['GET'])
+def calc_hi_api():
+    try:
+        data = request.args
+        temp = float(data['temp'])
+        rh = float(data['rh'])
+
+
+        heat_index = heat_index_api(temp, rh)
+
+        return jsonify(heat_index)
+
+    except Exception as e:
+        logging.error(f'INVALID ENTRY: {e}')
+    #     return jsonify({'stations': None})
+
 
 
 #################################################
