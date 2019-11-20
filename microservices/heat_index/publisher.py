@@ -6,17 +6,16 @@ from stations.event_generator import encode_utf8
 
 
 class RowPublisher:
-    producer = KafkaProducer(
-        bootstrap_servers=f'{KAFKA_HOST}:{KAFKA_PORT}',
-        value_serializer=encode_utf8,
-        max_in_flight_requests_per_connection=1,
-        retries=2,
-        acks=1
-    )
+    producer = None
 
-    @staticmethod
     def open(self, partition_id, epoch_id):
-        logging.info('Opening Kafka Producer -- SPARK FOREACHWRITER')
+        self.producer = KafkaProducer(
+            bootstrap_servers=f'{KAFKA_HOST}:{KAFKA_PORT}',
+            value_serializer=encode_utf8,
+            max_in_flight_requests_per_connection=1,
+            retries=2,
+            acks=1
+        )
         return True
 
     def process(self, row):
@@ -31,4 +30,5 @@ class RowPublisher:
 
     def close(self, error):
         logging.error(error)
-        return self.producer.close()
+        self.producer.close()
+        return
