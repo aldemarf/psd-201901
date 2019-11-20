@@ -1,8 +1,6 @@
 from conf import KAFKA_HOST, KAFKA_PORT
 from heat_index.publisher import RowPublisher
-
 from thingsboard.api import *
-
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StringType, FloatType
 from pyspark.sql.functions import udf, from_json, col
@@ -134,7 +132,7 @@ def start_hi_calc(sparkSession, host=KAFKA_HOST, port=KAFKA_PORT):
             .start()
 
     except Exception as error:
-        logging.error(error)
+        logging.error(f'SPARK ERROR : {error}')
         return False
 
 

@@ -14,9 +14,10 @@ class RowPublisher:
         acks=1
     )
 
+    @staticmethod
     def open(self, partition_id, epoch_id):
         logging.info('Opening Kafka Producer -- SPARK FOREACHWRITER')
-        return True  #self.producer.bootstrap_connected()
+        return True
 
     def process(self, row):
         try:
@@ -30,4 +31,4 @@ class RowPublisher:
 
     def close(self, error):
         logging.error(error)
-        self.producer.close()
+        return self.producer.close()
