@@ -11,68 +11,68 @@ BOT_TOKEN = "867830026:AAEIMa16WFWSDTqQdWeHAFmNGwJYhBr-gwg"
 KAFKA_HOST = f"{KAFKA_HOST}:{KAFKA_PORT}"
 cidades = {'Recife': {
                 'code':'A301',
-                'latitude':-8.059280000000001,
-                'longitude':-34.959239000000004
+                'lat':-8.059280000000001,
+                'long':-34.959239000000004
                 },
             'Palmares': {
                 'code':'A357',
-                'latitude':-8.666667,
-                'longitude':-8.666667
+                'lat':-8.666667,
+                'long':-8.666667
                 },
             'Caruaru': {
                 'code':'A341',
-                'latitude':-8.236069,
-                'longitude':-35.98555
+                'lat':-8.236069,
+                'long':-35.98555
                 },
             'Garanhuns': {
                 'code':'A322',
-                'latitude':-8.91095,
-                'longitude':-36.493381
+                'lat':-8.91095,
+                'long':-36.493381
                 },
             'Surubim': {
                 'code':'A328',
-                'latitude':-7.839628,
-                'longitude':-35.801056
+                'lat':-7.839628,
+                'long':-35.801056
                 },
             'Arco-Verde': {
                 'code':'A309',
-                'latitude':-8.433544,
-                'longitude':-37.055477
+                'lat':-8.433544,
+                'long':-37.055477
                 },
             'Serra Talhada': {
                 'code':'A350',
-                'latitude':-7.954277,
-                'longitude':-38.295082
+                'lat':-7.954277,
+                'long':-38.295082
                 },
             'Salgueiro': {
                 'code':'A370',
-                'latitude':-8.666667,
-                'longitude':-39.096111
+                'lat':-8.666667,
+                'long':-39.096111
                 },
             'Cabrobó': {
                 'code':'A329',
-                'latitude':-8.504,
-                'longitude':-39.31528
+                'lat':-8.504,
+                'long':-39.31528
                 },
             'Petrolina': {
                 'code':'A307',
-                'latitude':-9.388323,
-                'longitude':-40.523262
+                'lat':-9.388323,
+                'long':-40.523262
                 },
             'Ouricuri': {
                 'code':'A366',
-                'latitude':-7.885833,
-                'longitude':-40.102683
+                'lat':-7.885833,
+                'long':-40.102683
                 },
             'Floresta': {
                 'code':'A351',
-                'latitude':-8.598785000000001,
-                'longitude':-38.584062
+                'lat':-8.598785000000001,
+                'long':-38.584062
                 },
             'Ibimirim': {
                 'code':'A349',
-                'latitude':-8.509552000000001,
-                'longitude':-37.711591
+                'lat':-8.509552000000001,
+                'long':-37.711591
                 }
             }
 
@@ -136,7 +136,7 @@ def handle_location(call):
     consumer = createConsumer(topic)
     for message in consumer:
         #por aqui o resultado do IH
-        bot.send_message(userid, "Olá, ta be calor pqp " + str(message))
+        bot.send_message(userid, "Indice de calor: " + str(message))
         break
     print("finish")
     consumer.close()
@@ -164,7 +164,7 @@ def callback(call):
     consumer = createConsumer(topic)
     for message in consumer:
         #por aqui o resultado do IH
-        bot.send_message(userid, "Olá, ta be calor pqp " + str(message))
+        bot.send_message(userid, "Indice de calor: " + str(message))
         break
     print("finish")
     consumer.close()
