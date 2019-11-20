@@ -19,6 +19,12 @@ def api():
     return render_template('services.html')
 
 
+@app.route('/api/bot/start')
+def start_bot():
+    pass
+    return f'<h2>Bot service: OK!<h2>'
+
+
 #################################################
 ################## 5-NEAREST ####################
 #################################################
