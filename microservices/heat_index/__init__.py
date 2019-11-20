@@ -54,6 +54,39 @@ def heat_index(t, rh):
             return ftc(hi)
 
 
+def heat_index_api(t, rh):
+
+
+    temp = ctf(float(t))
+    hum = float(rh)
+
+    hi = (1.1 * temp) + (0.047 * hum) - 10.3
+
+    if hi < 80:
+        return ftc(hi)
+    else:
+        hi = -42.379 + (2.04901523 * temp + 10.14333127 * hum) \
+             - (0.22475541 * temp * hum) - (0.00683783 * temp ** 2) \
+             - (0.05481717 * hum**2) + (0.00122874 * temp ** 2 * hum) \
+             + (0.00085282 * temp * hum ** 2) - (0.00000199 * temp ** 2 * hum ** 2)
+
+        # 80 <= T <= 112 && RH <= 13%
+        if (hum < 13) and (80 <= temp <= 112):
+            adjustment_subtraction = ((13 - hum) / 4) * sqrt((17 - abs(temp - 95) / 17))
+            return ftc(hi - adjustment_subtraction)
+
+        # 80 <= T <= 87 && RH > 85%
+        elif (hum > 85) and (80 <= temp <= 87):
+            adjustment_addition = ((hum - 85) / 10) * ((87 - temp) / 5)
+            return ftc(hi + adjustment_addition)
+
+        else:
+            return ftc(hi)
+
+
+
+
+
 def get_stations_hi(station_type='ESTAÇÃO METEOROLÓGICA'):
     tenant_token = get_tenant_token()
     tenant_devices = get_tenant_devices(token=tenant_token, limit='10000')
@@ -152,3 +185,9 @@ def stop_heat_index(sparkSession, threads):
         status = 'Heat Index calculation terminated.</br>\n'
 
     return status
+
+
+if __name__ == '__main__':
+    HOST = 'localhost:9092'
+
+    start_hi_calc()
