@@ -7,7 +7,7 @@ from thingsboard.api import *
 from conf import KAFKA_HOST, KAFKA_PORT
 
 TB_TOKEN = get_tenant_token()
-BOT_TOKEN = "867830026:AAEIMa16WFWSDTqQdWeHAFmNGwJYhBr-gwg"
+BOT_TOKEN = ""
 KAFKA_HOST = f"{KAFKA_HOST}:{KAFKA_PORT}"
 cidades = {'Recife': {
                 'code':'A301',
